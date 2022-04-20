@@ -1,0 +1,901 @@
+===========================================================================================================================================
+
+Enable Hyper-V in Windows.
+
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+
+===========================================================================================================================================
+
+Setup K8 using virtualBox
+
+
+Install Kubectrl  - https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+Run - kubectl version --client
+
+Install Oracle Virtual Box
+Setup minikube (https://minikube.sigs.k8s.io/docs/start/)
+https://minikube.sigs.k8s.io/docs/drivers/
+
+
+minikube start --no-vtx-check
+PS C:\WINDOWS\system32> minikube start --no-vtx-check
+* minikube v1.25.2 on Microsoft Windows 10 Pro 10.0.19044 Build 19044
+* Using the virtualbox driver based on existing profile
+* Starting control plane node minikube in cluster minikube
+* Creating virtualbox VM (CPUs=2, Memory=4000MB, Disk=20000MB) ...
+! This VM is having trouble accessing https://k8s.gcr.io
+* To pull new external images, you may need to configure a proxy: https://minikube.sigs.k8s.io/docs/reference/networking/proxy/
+* Preparing Kubernetes v1.23.3 on Docker 20.10.12 ...
+  - kubelet.housekeeping-interval=5m
+  - Generating certificates and keys ...
+  - Booting up control plane ...
+  - Configuring RBAC rules ...
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                   │
+│    You have selected "virtualbox" driver, but there are better options !                          │
+│    For better performance and support consider using a different driver:                          │
+│            - hyperv                                                                               │
+│                                                                                                   │
+│    To turn off this warning run:                                                                  │
+│                                                                                                   │
+│            $ minikube config set WantVirtualBoxDriverWarning false                                │
+│                                                                                                   │
+│                                                                                                   │
+│    To learn more about on minikube drivers checkout https://minikube.sigs.k8s.io/docs/drivers/    │
+│    To see benchmarks checkout https://minikube.sigs.k8s.io/docs/benchmarks/cpuusage/              │
+│                                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
+* Verifying Kubernetes components...
+* Enabled addons: storage-provisioner, default-storageclass
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+
+
+PS C:\WINDOWS\system32> minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+PS C:\WINDOWS\system32> kubectl get po -A
+NAMESPACE     NAME                               READY   STATUS    RESTARTS        AGE
+kube-system   coredns-64897985d-469h9            1/1     Running   0               3m37s
+kube-system   etcd-minikube                      1/1     Running   0               3m36s
+kube-system   kube-apiserver-minikube            1/1     Running   0               3m36s
+kube-system   kube-controller-manager-minikube   1/1     Running   0               3m36s
+kube-system   kube-proxy-lgnq5                   1/1     Running   0               3m37s
+kube-system   kube-scheduler-minikube            1/1     Running   0               3m36s
+kube-system   storage-provisioner                1/1     Running   1 (2m50s ago)   3m29s
+PS C:\WINDOWS\system32>
+
+
+
+PS C:\WINDOWS\system32> minikube dashboard
+* Enabling dashboard ...
+  - Using image kubernetesui/dashboard:v2.3.1
+  - Using image kubernetesui/metrics-scraper:v1.0.7
+* Verifying dashboard health ...
+* Launching proxy ...
+* Verifying proxy health ...
+
+http://127.0.0.1:65169/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/workloads?namespace=default
+
+
+
+PS C:\WINDOWS\system32> kubectl get nodes
+NAME       STATUS   ROLES                  AGE     VERSION
+minikube   Ready    control-plane,master   6m52s   v1.23.3
+
+
+
+===========================================================================================================================================
+Setup & Deploy an K8 
+
+PS C:\WINDOWS\system32> kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.4
+deployment.apps/hello-minikube created
+
+
+PS C:\WINDOWS\system32> kubectl get deployments
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+hello-minikube   0/1     1            0           29s
+PS C:\WINDOWS\system32>
+
+
+PS C:\WINDOWS\system32> kubectl expose deployment hello-minikube --type=NodePort --port=8080
+service/hello-minikube exposed
+
+
+PS C:\WINDOWS\system32> minikube service hello-minikube
+
+
+PS C:\WINDOWS\system32> minikube service hello-minikube --url
+http://158.199.53.12:30273
+
+
+PS C:\WINDOWS\system32> kubectl delete service hello-minikube
+service "hello-minikube" deleted
+
+
+PS C:\WINDOWS\system32> kubectl delete deployment hello-minikube
+deployment.apps "hello-minikube" deleted
+
+
+PS C:\WINDOWS\system32> kubectl get pods
+No resources found in default namespace.
+
+
+PS C:\WINDOWS\system32> kubectl get deployments
+No resources found in default namespace.
+PS C:\WINDOWS\system32>
+
+
+PS C:\WINDOWS\system32> kubectl get nodes
+NAME       STATUS   ROLES                  AGE   VERSION
+minikube   Ready    control-plane,master   41m   v1.23.3
+
+
+PS C:\WINDOWS\system32> kubectl create deployment nginx --image=nginx
+deployment.apps/nginx created
+
+
+PS C:\WINDOWS\system32> kubectl get deployments
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   0/1     1            0           26s
+
+
+PS C:\WINDOWS\system32> kubectl get pods
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-85b98978db-kp4sh   0/1     ContainerCreating   0          45s
+
+
+PS C:\WINDOWS\system32> kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-85b98978db-kp4sh   1/1     Running   0          56s
+
+
+PS C:\WINDOWS\system32> kubectl describe pods nginx
+Name:         nginx-85b98978db-kp4sh
+Namespace:    default
+Priority:     0
+Node:         minikube/166.198.58.160
+Start Time:   Tue, 19 Apr 2022 00:30:17 +1000
+Labels:       app=nginx
+              pod-template-hash=85b98978db
+Annotations:  <none>
+Status:       Running
+IP:           167.120.3.6
+IPs:
+  IP:           167.120.3.6
+Controlled By:  ReplicaSet/nginx-85b98978db
+Containers:
+  nginx:
+    Container ID:   docker://3a2db1d81ee59bb869d9d5f068326fbdf4b32779bc23ea30a0d096c02d28cee7
+    Image:          nginx
+    Image ID:       docker-pullable://nginx@sha256:2275af0f20d71b293916f1958f8497f987b8d8fd8113df54635f2a5915002bf1
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Tue, 19 Apr 2022 00:31:02 +1000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5l9r4 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  kube-api-access-5l9r4:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  100s  default-scheduler  Successfully assigned default/nginx-85b98978db-kp4sh to minikube
+  Normal  Pulling    97s   kubelet            Pulling image "nginx"
+  Normal  Pulled     55s   kubelet            Successfully pulled image "nginx" in 41.497615094s
+  Normal  Created    55s   kubelet            Created container nginx
+  Normal  Started    55s   kubelet            Started container nginx
+
+
+
+PS C:\WINDOWS\system32> kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+nginx-85b98978db-kp4sh   1/1     Running   0          4m36s   167.120.3.6   minikube   <none>           <none>
+
+
+PS C:\WINDOWS\system32> kubectl create service nodeport nginx --tcp=80:80
+service/nginx created
+
+
+PS C:\WINDOWS\system32> kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   167.120.3.91        <none>        443/TCP        48m
+nginx        NodePort    10.110.234.252   <none>        80:31936/TCP   14s
+
+
+PS C:\WINDOWS\system32> minikube service nginx
+
+
+PS C:\WINDOWS\system32> minikube service nginx --url
+http://167.120.3.9:31936
+
+PS C:\WINDOWS\system32> kubectl delete service nginx
+service "nginx" deleted
+
+
+PS C:\WINDOWS\system32> kubectl delete deployment nginx
+deployment.apps "nginx" deleted
+
+
+PS C:\WINDOWS\system32> kubectl get pods
+No resources found in default namespace.
+
+
+PS C:\WINDOWS\system32> kubectl get deployments
+No resources found in default namespace.
+
+
+PS C:\WINDOWS\system32> minikube addons list
+|-----------------------------|----------|--------------|--------------------------------|
+|         ADDON NAME          | PROFILE  |    STATUS    |           MAINTAINER           |
+|-----------------------------|----------|--------------|--------------------------------|
+| ambassador                  | minikube | disabled     | third-party (ambassador)       |
+| auto-pause                  | minikube | disabled     | google                         |
+| csi-hostpath-driver         | minikube | disabled     | kubernetes                     |
+| dashboard                   | minikube | enabled ✅   | kubernetes                     |
+| default-storageclass        | minikube | enabled ✅   | kubernetes                     |
+| efk                         | minikube | disabled     | third-party (elastic)          |
+| freshpod                    | minikube | disabled     | google                         |
+| gcp-auth                    | minikube | disabled     | google                         |
+| gvisor                      | minikube | disabled     | google                         |
+| helm-tiller                 | minikube | disabled     | third-party (helm)             |
+| ingress                     | minikube | disabled     | unknown (third-party)          |
+| ingress-dns                 | minikube | disabled     | google                         |
+| istio                       | minikube | disabled     | third-party (istio)            |
+| istio-provisioner           | minikube | disabled     | third-party (istio)            |
+| kong                        | minikube | disabled     | third-party (Kong HQ)          |
+| kubevirt                    | minikube | disabled     | third-party (kubevirt)         |
+| logviewer                   | minikube | disabled     | unknown (third-party)          |
+| metallb                     | minikube | disabled     | third-party (metallb)          |
+| metrics-server              | minikube | disabled     | kubernetes                     |
+| nvidia-driver-installer     | minikube | disabled     | google                         |
+| nvidia-gpu-device-plugin    | minikube | disabled     | third-party (nvidia)           |
+| olm                         | minikube | disabled     | third-party (operator          |
+|                             |          |              | framework)                     |
+| pod-security-policy         | minikube | disabled     | unknown (third-party)          |
+| portainer                   | minikube | disabled     | portainer.io                   |
+| registry                    | minikube | disabled     | google                         |
+| registry-aliases            | minikube | disabled     | unknown (third-party)          |
+| registry-creds              | minikube | disabled     | third-party (upmc enterprises) |
+| storage-provisioner         | minikube | enabled ✅   | google                         |
+| storage-provisioner-gluster | minikube | disabled     | unknown (third-party)          |
+| volumesnapshots             | minikube | disabled     | kubernetes                     |
+|-----------------------------|----------|--------------|--------------------------------|
+PS C:\WINDOWS\system32>
+
+
+
+===========================================================================================================================================
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+No resources found in default namespace.
+pod/nginx created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          17s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   167.120.3.91    <none>        443/TCP   23h
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete pod nginx
+pod "nginx" deleted
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get nodes
+NAME       STATUS   ROLES                  AGE   VERSION
+minikube   Ready    control-plane,master   23h   v1.23.3
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods 
+No resources found in default namespace.
+PS D:\kubernetes\Sample_Kube_Test>                                   
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl logs postgres
+Error: Database is uninitialized and superuser password is not specified.
+       You must specify POSTGRES_PASSWORD to a non-empty value for the
+       superuser. For example, "-e POSTGRES_PASSWORD=password" on "docker run".
+
+       You may also use "POSTGRES_HOST_AUTH_METHOD=trust" to allow all
+       connections without a password. This is *not* recommended.
+
+       See PostgreSQL documentation about "trust":
+       https://www.postgresql.org/docs/current/auth-trust.html
+PS D:\kubernetes\Sample_Kube_Test> 
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl run  nginx --image=nginx
+pod/nginx created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS              RESTARTS   AGE
+nginx   0/1     ContainerCreating   0          4s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          13s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete pod nginx        
+pod "nginx" deleted
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods        
+No resources found in default namespace.
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl run redis --image=redis123 --dry-run=client -o yaml > redis-definition.yaml
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f redis-definition.yaml
+pod/redis created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS              RESTARTS   AGE
+redis   0/1     ContainerCreating   0          5s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS         RESTARTS   AGE
+redis   0/1     ErrImagePull   0          48s
+ 
+PS D:\kubernetes\Sample_Kube_Test> cat .\redis-definition.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: redis
+  name: redis
+spec:
+  containers:
+  - image: redis123
+    name: redis
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl edit pod redis
+Edit cancelled, no changes made.
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+redis   1/1     Running   0          7m49s
+PS D:\kubernetes\Sample_Kube_Test> 
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\ReplicationController.yaml
+replicationcontroller/myapp-rc created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS    RESTARTS   AGE
+myapp-rc-b4nbb   1/1     Running   0          3m20s
+myapp-rc-xjb9w   1/1     Running   0          3m20s
+myapp-rc-zv9wf   1/1     Running   0          3m20s
+redis            1/1     Running   0          27m
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get replicationcontroller
+NAME       DESIRED   CURRENT   READY   AGE
+myapp-rc   3         3         3       30s
+
+
+PS D:\kubernetes\Sample_Kube_Test> 
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete rc myapp-rc
+replicationcontroller "myapp-rc" deleted
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS        RESTARTS   AGE
+myapp-rc-b84cv   1/1     Terminating   0          5m27s
+myapp-rc-bxxrp   1/1     Terminating   0          5m50s
+myapp-rc-jblxd   1/1     Terminating   0          5m10s
+redis            1/1     Running       0          34m
+PS D:\kubernetes\Sample_Kube_Test>
+
+
+PS D:\kubernetes\Sample_Kube_Test>
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\ReplicaSet.yaml
+replicaset.apps/myapp-rs created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS              RESTARTS   AGE
+myapp-rs-l4lmb   0/1     ContainerCreating   0          6s
+myapp-rs-rtkl5   0/1     ContainerCreating   0          6s
+redis            1/1     Running             0          44m
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get replicaset
+NAME       DESIRED   CURRENT   READY   AGE
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+myapp-rs-6jwpb   1/1     Running             0          31s
+myapp-rs-rtkl5   0/1     ContainerCreating   0          31s
+redis            1/1     Running             0          44m
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS              RESTARTS   AGE
+myapp-rs-6jwpb   1/1     Running             0          38s
+myapp-rs-l4lmb   1/1     Running             0          38s
+myapp-rs-rtkl5   0/1     ContainerCreating   0          38s
+redis            1/1     Running             0          44m
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl scale --replicas=4 -f .\ReplicaSet.yaml
+replicaset.apps/myapp-rs scaled
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get replicaset
+myapp-rs   4         4         3       115s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl replace -f .\ReplicaSet.yaml
+replicaset.apps/myapp-rs replaced
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get replicaset
+NAME       DESIRED   CURRENT   READY   AGE
+myapp-rs   5         5         4       2m52s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS              RESTARTS   AGE
+myapp-rs-2cqtr   1/1     Running             0          2m59s
+myapp-rs-66g4j   1/1     Running             0          2m59s
+myapp-rs-9xqrh   0/1     ContainerCreating   0          13s
+myapp-rs-r7grr   1/1     Running             0          2m59s
+myapp-rs-xv5tg   1/1     Running             0          75s
+redis            1/1     Running             0          51m
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete rs myapp-rs
+replicaset.apps "myapp-rs" deleted
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS        RESTARTS   AGE
+myapp-rs-2cqtr   1/1     Terminating   0          3m25s
+myapp-rs-66g4j   1/1     Terminating   0          3m25s
+myapp-rs-9xqrh   1/1     Terminating   0          39s
+myapp-rs-r7grr   1/1     Terminating   0          3m25s
+myapp-rs-xv5tg   1/1     Terminating   0          101s
+redis            1/1     Running       0          51m
+
+
+PS D:\kubernetes\Sample_Kube_Test> 
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete rs myapp-rs
+replicaset.apps "myapp-rs" deleted
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME             READY   STATUS        RESTARTS   AGE
+myapp-rs-6jwpb   1/1     Terminating   0          68s
+myapp-rs-l4lmb   1/1     Terminating   0          68s
+myapp-rs-rtkl5   1/1     Terminating   0          68s
+redis            1/1     Running       0          45m
+PS D:\kubernetes\Sample_Kube_Test>
+
+
+PS D:\kubernetes\Sample_Kube_Test>
+PS D:\kubernetes\Sample_Kube_Test> kubectl explain replicaset
+KIND:     ReplicaSet
+VERSION:  apps/v1
+
+DESCRIPTION:
+     ReplicaSet ensures that a specified number of pod replicas are running at
+     any given time.
+
+FIELDS:
+   apiVersion   <string>
+     APIVersion defines the versioned schema of this representation of an
+     object. Servers should convert recognized schemas to the latest internal
+     value, and may reject unrecognized values. More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+
+   kind <string>
+     Kind is a string value representing the REST resource this object
+     represents. Servers may infer this from the endpoint the client submits
+     requests to. Cannot be updated. In CamelCase. More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+
+   metadata     <Object>
+     If the Labels of a ReplicaSet are empty, they are defaulted to be the same
+     as the Pod(s) that the ReplicaSet manages. Standard object's metadata. More
+     info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+
+   spec <Object>
+     Spec defines the specification of the desired behavior of the ReplicaSet.
+     More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+
+   status       <Object>
+     Status is the most recently observed status of the ReplicaSet. This data
+     may be out of date by some window of time. Populated by the system.
+     Read-only. More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+
+PS D:\kubernetes\Sample_Kube_Test> 
+
+
+kubectl delete -f <file-name>.yaml
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\KindDeployment.yaml
+deployment.apps/myapp-rs created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get deployment
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-rs   0/5     5            0           7s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get replicaset
+NAME                  DESIRED   CURRENT   READY   AGE
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+myapp-rs-7b4d997fd7-5pqdc   0/1     ContainerCreating   0          31s
+myapp-rs-7b4d997fd7-5rt2v   0/1     ContainerCreating   0          31s
+myapp-rs-7b4d997fd7-bdskn   0/1     ImagePullBackOff    0          31s
+myapp-rs-7b4d997fd7-c4gl5   0/1     ContainerCreating   0          31s
+myapp-rs-7b4d997fd7-pzdvg   0/1     ContainerCreating   0          31s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get all 
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/myapp-rs-7b4d997fd7-5pqdc   1/1     Running   0          95s
+pod/myapp-rs-7b4d997fd7-5rt2v   1/1     Running   0          95s
+pod/myapp-rs-7b4d997fd7-bdskn   1/1     Running   0          95s
+pod/myapp-rs-7b4d997fd7-c4gl5   1/1     Running   0          95s
+pod/myapp-rs-7b4d997fd7-pzdvg   1/1     Running   0          95s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   167.120.3.91    <none>        443/TCP   25h
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/myapp-rs   5/5     5            5           96s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/myapp-rs-7b4d997fd7   5         5         5       96s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete deployment myapp-rs     
+deployment.apps "myapp-rs" deleted
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+No resources found in default namespace.
+PS D:\kubernetes\Sample_Kube_Test> 
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\KindDeployment.yaml
+deployment.apps/myapp-rs created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout status deployment.apps/myapp-rs
+deployment "myapp-rs" successfully rolled out
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout history deployment.apps/myapp-rs
+deployment.apps/myapp-rs
+REVISION  CHANGE-CAUSE
+1         <none>
+PS D:\kubernetes\Sample_Kube_Test> kubectl apply -f .\KindDeployment.yaml
+Warning: resource deployments/myapp-rs is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+deployment.apps/myapp-rs configured
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout status deployment.apps/myapp-rs 
+Waiting for deployment "myapp-rs" rollout to finish: 2 out of 4 new replicas have been updated...
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout status deployment.apps/myapp-rs 
+Waiting for deployment "myapp-rs" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "myapp-rs" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "myapp-rs" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "myapp-rs" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "myapp-rs" rollout to finish: 3 of 4 updated replicas are available...
+deployment "myapp-rs" successfully rolled out
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout history deployment.apps/myapp-rs
+deployment.apps/myapp-rs 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+
+PS D:\kubernetes\Sample_Kube_Test> 
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout undo deployment.apps/myapp-rs
+deployment.apps/myapp-rs rolled back
+PS D:\kubernetes\Sample_Kube_Test> kubectl rollout history deployment.apps/myapp-rs
+deployment.apps/myapp-rs 
+REVISION  CHANGE-CAUSE
+2         <none>
+3         <none>
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\KindService.yaml
+service/myapp-service created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl create -f .\KindDeployment.yaml
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get services
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   167.120.3.91     <none>        443/TCP        8m7s
+myapp-service   NodePort    10.107.4.44   <none>        80:30008/TCP   17s
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl apply -f .\KindDeployment.yaml
+deployment.apps/myapp-rs created
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl get pods
+NAME                        READY   STATUS              RESTARTS   AGE
+myapp-rs-5bbbc67998-56cxj   0/1     ContainerCreating   0          3s
+myapp-rs-5bbbc67998-6fw2n   1/1     Running             0          3s
+myapp-rs-5bbbc67998-8jmfk   1/1     Running             0          3s
+myapp-rs-5bbbc67998-qqwns   1/1     Running             0          3s
+
+
+PS C:\WINDOWS\system32> minikube service myapp-service --url
+http://172.19.169.207:30008
+PS C:\WINDOWS\system32>
+
+PS D:\kubernetes\Sample_Kube_Test> curl http://172.19.169.207:30008
+StatusCode        : 200
+StatusDescription : OK
+Content           : <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <title>Welcome to nginx!</title>
+                    <style>
+                        body {
+                            width: 35em;
+                            margin: 0 auto;
+                            font-family: Tahoma, Verdana, Arial, sans-serif;
+                        }
+                    </style>
+                    <...
+RawContent        : HTTP/1.1 200 OK
+                    Connection: keep-alive
+                    Accept-Ranges: bytes
+                    Content-Length: 612
+                    Content-Type: text/html
+                    Date: Wed, 20 Apr 2022 03:16:35 GMT
+                    ETag: "53ccdbc9-264"
+                    Last-Modified: Mon, 21 Jul 2014 ...
+Forms             : {}
+Headers           : {[Connection, keep-alive], [Accept-Ranges, bytes], [Content-Length, 612],
+                    [Content-Type, text/html]...}
+Images            : {}
+InputFields       : {}
+Links             : {@{innerHTML=nginx.org; innerText=nginx.org; outerHTML=<A 
+                    href="http://nginx.org/">nginx.org</A>; outerText=nginx.org; tagName=A;
+                    href=http://nginx.org/}, @{innerHTML=nginx.com; innerText=nginx.com; outerHTML=<A  
+                    href="http://nginx.com/">nginx.com</A>; outerText=nginx.com; tagName=A;
+                    href=http://nginx.com/}}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 612
+
+
+
+PS D:\kubernetes\Sample_Kube_Test>
+PS D:\kubernetes\Sample_Kube_Test> kubectl get svc
+NAME            TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   167.120.3.91     <none>        443/TCP        15m
+myapp-service   NodePort    10.107.4.44   <none>        80:30008/TCP   7m35s
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete deployment myapp-rs    
+deployment.apps "myapp-rs" deleted
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete service myapp-service
+service "myapp-service" deleted
+PS D:\kubernetes\Sample_Kube_Test>
+
+
+
+PS D:\kubernetes\Sample_Kube_Test> kubectl apply -f .\KindServiceClusterIP.yaml
+service/myapp-service created
+PS D:\kubernetes\Sample_Kube_Test> kubectl get svc
+NAME            TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes      ClusterIP   167.120.3.91      <none>        443/TCP   22m
+myapp-service   ClusterIP   10.111.89.98   <none>        80/TCP    16s
+PS D:\kubernetes\Sample_Kube_Test> kubectl delete service myapp-service        
+service "myapp-service" deleted
+PS D:\kubernetes\Sample_Kube_Test> kubectl get svc
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   167.120.3.91    <none>        443/TCP   22m
+PS D:\kubernetes\Sample_Kube_Test>
+
+
+
+
+
+===========================================================================================================================================
+
+Restart minikube
+
+
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+
+
+
+PS C:\WINDOWS\system32> minikube delete
+* Removing C:\Users\JP\.minikube\machines\minikube ...
+* Removed all traces of the "minikube" cluster.
+
+
+PS C:\WINDOWS\system32> minikube start --no-vtx-check
+* minikube v1.25.2 on Microsoft Windows 10 Pro 10.0.19044 Build 19044
+* Automatically selected the hyperv driver. Other choices: virtualbox, ssh
+* Starting control plane node minikube in cluster minikube
+* Creating hyperv VM (CPUs=2, Memory=4000MB, Disk=20000MB) ...
+! StartHost failed, but will try again: creating host: create: precreate: Hyper-V PowerShell Module is not available
+* Creating hyperv VM (CPUs=2, Memory=4000MB, Disk=20000MB) ...
+* Failed to start hyperv VM. Running "minikube delete" may fix it: creating host: create: precreate: Hyper-V PowerShell Module is not available
+! Startup with hyperv driver failed, trying with alternate driver virtualbox: Failed to start host: creating host: create: precreate: Hyper-V PowerShell Module is not available
+! Failed to delete cluster minikube, proceeding with retry anyway.
+* Starting control plane node minikube in cluster minikube
+* Creating virtualbox VM (CPUs=2, Memory=4000MB, Disk=20000MB) ...
+! This VM is having trouble accessing https://k8s.gcr.io
+* To pull new external images, you may need to configure a proxy: https://minikube.sigs.k8s.io/docs/reference/networking/proxy/
+* Preparing Kubernetes v1.23.3 on Docker 20.10.12 ...
+  - kubelet.housekeeping-interval=5m
+  - Generating certificates and keys ...
+  - Booting up control plane ...
+  - Configuring RBAC rules ...
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                   │
+│    You have selected "virtualbox" driver, but there are better options !                          │
+│    For better performance and support consider using a different driver:                          │
+│            - hyperv                                                                               │
+│                                                                                                   │
+│    To turn off this warning run:                                                                  │
+│                                                                                                   │
+│            $ minikube config set WantVirtualBoxDriverWarning false                                │
+│                                                                                                   │
+│                                                                                                   │
+│    To learn more about on minikube drivers checkout https://minikube.sigs.k8s.io/docs/drivers/    │
+│    To see benchmarks checkout https://minikube.sigs.k8s.io/docs/benchmarks/cpuusage/              │
+│                                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
+* Verifying Kubernetes components...
+* Enabled addons: default-storageclass, storage-provisioner
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+
+PS C:\WINDOWS\system32> minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+
+===========================================================================================================================================
+
+http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/?ref=faun#/login
+
+https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md?ref=faun
+https://dev.to/devcrafter91/how-to-install-kubernetes-on-windows-10-55b6?msclkid=47a37be2bee811ec8494fcf306d4dd03
+https://learnk8s.io/installing-docker-kubernetes-windows?msclkid=47a4ac64bee811ecaecd67f1ad4de2c1
+
+https://faun.dev/c/stories/nawazsiddiqui27/how-to-install-kubernetes-on-windows-10/?msclkid=47a4969abee811ec9f3133f5fe4cecae
+https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+https://kind.sigs.k8s.io/docs/user/quick-start/#interacting-with-your-cluster
+
+===========================================================================================================================================
+Setup K8 using Kind.
+Install Docker and enable "Use the WSL 2 based engine"
+
+PS C:\Users\JP> curl.exe -Lo kind-windows-amd64.exe https://kind.sigs.k8s.io/dl/v0.12.0/kind-windows-amd64
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    99  100    99    0     0    280      0 --:--:-- --:--:-- --:--:--   282
+100   657  100   657    0     0    861      0 --:--:-- --:--:-- --:--:--     0
+100 6571k  100 6571k    0     0  3835k      0  0:00:01  0:00:01 --:--:-- 3835k
+
+PS C:\Users\JP>
+PS C:\Users\JP>
+PS C:\Users\JP> Move-Item .\kind-windows-amd64.exe kind.exe
+
+
+PS C:\Users\JP> docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+PS C:\Users\JP> ./kind create cluster
+Creating cluster "kind" ...
+ • Ensuring node image (kindest/node:v1.23.4) 🖼  ...
+ ✓ Ensuring node image (kindest/node:v1.23.4) 🖼
+ • Preparing nodes 📦   ...
+ ✓ Preparing nodes 📦
+ • Writing configuration 📜  ...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+Set kubectl context to "kind-kind"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-kind
+
+Thanks for using kind! 😊
+PS C:\Users\JP>
+
+PS C:\Users\JP> kubectl apply -f https://raw.githubusercontent.com/Kubernetes/dashboard/v2.4.0/aio/deploy/recommended.yaml
+namespace/kubernetes-dashboard created
+serviceaccount/kubernetes-dashboard created
+service/kubernetes-dashboard created
+secret/kubernetes-dashboard-certs created
+secret/kubernetes-dashboard-csrf created
+secret/kubernetes-dashboard-key-holder created
+configmap/kubernetes-dashboard-settings created
+role.rbac.authorization.k8s.io/kubernetes-dashboard created
+clusterrole.rbac.authorization.k8s.io/kubernetes-dashboard created
+rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
+clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
+deployment.apps/kubernetes-dashboard created
+service/dashboard-metrics-scraper created
+deployment.apps/dashboard-metrics-scraper created
+
+
+PS C:\Users\JP>
+PS C:\Users\JP> kubectl apply -f dashboard-adminuser.yaml
+serviceaccount/admin-user created
+
+
+PS C:\Users\JP> kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}"
+eyQQrKA
+PS C:\Users\JP>
+
+
+PS C:\Users\JP> kubectl proxy
+Starting to serve on 127.0.0.1:8001
